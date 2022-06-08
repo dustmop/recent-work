@@ -50,6 +50,11 @@ def parse_time_text(text):
   return dt
 
 
+def is_old_event(dt):
+  delta = datetime.datetime.now() - dt
+  return delta > datetime.timedelta(days=3)
+
+
 def list_entities(dirpath):
   dirpath = dirpath.replace('~', os.environ['HOME'])
   ents = os.listdir(dirpath)
@@ -73,23 +78,19 @@ def get_recent_commits(folder):
   cwd = os.getcwd()
   os.chdir(folder.fullpath)
   cmd = ['git', 'log']
-  p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=None)
+  p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  # TODO: check return code
   content = p.communicate()[0]
   os.chdir(cwd)
   content = str(content, 'utf-8')
 
   res = []
   commit_id = None
-  date_text = None
+  when = None
   message = None
   done = False
   capture = []
   for line in content.split('\n'):
-
-    # TMP, should check commit time instead
-    if len(res) > 5:
-      break
-
     if fetch_param(line, 'commit ', capture):
       done = False
       commit_id = capture[0]
@@ -97,14 +98,16 @@ def get_recent_commits(folder):
     if fetch_param(line, 'Author: ', capture):
       continue
     if fetch_param(line, 'Date: ', capture):
-      date_text = parse_time_text(capture[0])
+      when = parse_time_text(capture[0])
+      if is_old_event(when):
+        break
       continue
     if not line:
       continue
     if not done:
-      message = line.strip()
-      res.append(Commit(commit_id, date_text, message))
       done = True
+      message = line.strip()
+      res.append(Commit(commit_id, when, message))
   return res
 
 
@@ -114,6 +117,8 @@ def find_recent_work(dirpath):
     if not folder.isdir:
       continue
     commits = get_recent_commits(folder)
+    if not len(commits):
+      continue
     print(folder)
     for c in commits:
       print(c)
