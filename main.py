@@ -60,7 +60,10 @@ def list_entities(dirpath):
   ents = os.listdir(dirpath)
   res = []
   for ent in ents:
-    res.append(FileEnt(dirpath, ent))
+    try:
+      res.append(FileEnt(dirpath, ent))
+    except FileNotFoundError:
+      continue
   res.sort(key=lambda f: f.mtime)
   res.reverse()
   return res
