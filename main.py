@@ -40,7 +40,8 @@ class Commit(object):
 
 def shorten(text, size):
   if len(text) < size:
-    return text
+    delta = size - len(text)
+    return text + ' '*delta
   return text[:size-3] + '...'
 
 
