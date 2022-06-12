@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import json
 import os
@@ -51,9 +52,9 @@ def parse_time_text(text):
   return dt
 
 
-def is_old_event(dt):
+def is_old_event(dt, num_days):
   delta = datetime.datetime.now() - dt
-  return delta > datetime.timedelta(days=5)
+  return delta > datetime.timedelta(days=num_days)
 
 
 def is_old_folder(folder):
@@ -83,7 +84,7 @@ def fetch_param(text, prefix, capture):
   return False
 
 
-def get_recent_commits(folder):
+def get_recent_commits(folder, num_days):
   cwd = os.getcwd()
   os.chdir(folder.fullpath)
   cmd = ['git', 'log', '-n', '10']
@@ -110,7 +111,7 @@ def get_recent_commits(folder):
       continue
     if fetch_param(line, 'Date: ', capture):
       when = parse_time_text(capture[0])
-      if is_old_event(when):
+      if is_old_event(when, num_days):
         break
       continue
     if not line:
@@ -122,14 +123,16 @@ def get_recent_commits(folder):
   return res
 
 
-def find_recent_work(dirpath):
+def find_recent_work(dirpath, num_days):
+  if not num_days:
+    num_days = 5
   folders = list_entities(dirpath)
   for folder in folders:
     if not folder.isdir:
       continue
     if is_old_folder(folder):
       break
-    commits = get_recent_commits(folder)
+    commits = get_recent_commits(folder, num_days)
     if not len(commits):
       continue
     print(folder)
@@ -139,9 +142,12 @@ def find_recent_work(dirpath):
 
 
 def main():
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-n', dest='num_days', type=int)
+  args = parser.parse_args()
   roots = json.loads(read_file('roots.json'))
   for root in roots:
-    find_recent_work(root)
+    find_recent_work(root, args.num_days)
 
 
 if __name__ == '__main__':
