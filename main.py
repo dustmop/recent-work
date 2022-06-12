@@ -52,7 +52,12 @@ def parse_time_text(text):
 
 def is_old_event(dt):
   delta = datetime.datetime.now() - dt
-  return delta > datetime.timedelta(days=3)
+  return delta > datetime.timedelta(days=5)
+
+
+def is_old_folder(folder):
+  delta = datetime.datetime.now() - folder.mtime
+  return delta > datetime.timedelta(weeks=1)
 
 
 def list_entities(dirpath):
@@ -80,7 +85,7 @@ def fetch_param(text, prefix, capture):
 def get_recent_commits(folder):
   cwd = os.getcwd()
   os.chdir(folder.fullpath)
-  cmd = ['git', 'log']
+  cmd = ['git', 'log', '-n', '10']
   p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   # TODO: check return code
   content = p.communicate()[0]
@@ -97,6 +102,8 @@ def get_recent_commits(folder):
     if fetch_param(line, 'commit ', capture):
       done = False
       commit_id = capture[0]
+      continue
+    if fetch_param(line, 'Merge: ', capture):
       continue
     if fetch_param(line, 'Author: ', capture):
       continue
@@ -119,6 +126,8 @@ def find_recent_work(dirpath):
   for folder in folders:
     if not folder.isdir:
       continue
+    if is_old_folder(folder):
+      break
     commits = get_recent_commits(folder)
     if not len(commits):
       continue
