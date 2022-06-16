@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import subprocess
+import sys
 
 
 def read_file(filename):
@@ -145,7 +146,21 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('-n', dest='num_days', type=int)
   args = parser.parse_args()
-  roots = json.loads(read_file('roots.json'))
+  homedir = os.environ['HOME']
+  rootsFile = os.path.join(homedir, '.recent-work.json')
+  if not os.path.isfile(rootsFile):
+    sys.stderr.write("""error: config not found!
+Expected to be found at %s
+The contents should be JSON of dir paths, like this:
+
+[
+  "~/code/my-projects/",
+  "~/code/tools/",
+  "~/job/"
+]
+""" % rootsFile)
+    sys.exit(1)
+  roots = json.loads(read_file(rootsFile))
   for root in roots:
     find_recent_work(root, args.num_days)
 
