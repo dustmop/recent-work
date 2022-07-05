@@ -124,7 +124,7 @@ def get_recent_commits(folder, num_days):
   return res
 
 
-def find_recent_work(dirpath, num_days):
+def find_recent_work(dirpath, num_days, short_form):
   if not num_days:
     num_days = 5
   folders = list_entities(dirpath)
@@ -137,6 +137,8 @@ def find_recent_work(dirpath, num_days):
     if not len(commits):
       continue
     print(folder)
+    if short_form:
+      continue
     for c in commits:
       print(c)
     print('')
@@ -145,6 +147,7 @@ def find_recent_work(dirpath, num_days):
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('-n', dest='num_days', type=int)
+  parser.add_argument('-s', dest='short_form', action='store_true')
   args = parser.parse_args()
   homedir = os.environ['HOME']
   rootsFile = os.path.join(homedir, '.recent-work.json')
@@ -162,7 +165,7 @@ The contents should be JSON of dir paths, like this:
     sys.exit(1)
   roots = json.loads(read_file(rootsFile))
   for root in roots:
-    find_recent_work(root, args.num_days)
+    find_recent_work(root, args.num_days, args.short_form)
 
 
 if __name__ == '__main__':
