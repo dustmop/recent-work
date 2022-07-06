@@ -38,4 +38,5 @@ Arguments:
 
 ```
  -n [days]  Number of days to look back (default 5)
+ -s         Short form: only show repos, without recent commits
 ```
